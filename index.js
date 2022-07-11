@@ -35,16 +35,19 @@ app.post('/posts/:id/comments', async (req, res) => {
   comments.push(newComment);
 
   commentsByPostId[postId] = comments;
+  try {
 
-  await axios.post('http://event-bus-srv:4005/events', {
-    type: 'CommentCreated',
-    data: {
-      postId,
-      ...newComment,
-    },
-  });
-
-  res.status(201).send(comments);
+    await axios.post('http://event-bus-srv:4005/events', {
+      type: 'CommentCreated',
+      data: {
+        postId,
+        ...newComment,
+      },
+    });
+    res.status(201).send(comments);    
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 app.post('/events', async (req, res) => {
@@ -56,19 +59,21 @@ app.post('/events', async (req, res) => {
     const comment = comments.find((comment) => comment.id === id);
 
     if (comment) comment.status = status;
-
-    await axios.post('http://event-bus-srv:4005/events', {
-      type: 'CommentUpdated',
-      data: {
-        id,
-        status,
-        postId,
-        content,
-      },
-    });
+    try {
+      await axios.post('http://event-bus-srv:4005/events', {
+        type: 'CommentUpdated',
+        data: {
+          id,
+          status,
+          postId,
+          content,
+        },
+      });      
+      res.status(200).json({});
+    } catch (error) {
+      console.log(error);
+    }
   }
-
-  res.status(200).json({});
 });
 
 app.use((err, req, res, next) => {
